@@ -4,7 +4,7 @@ import { z } from "zod";
 const INTERNAL_BASE =
   "https://phpstack-1338806-5972702.cloudwaysapps.com/api/index.php";
 const WP_BASE = "https://bitcoincasinokings.com/wp-json/casino/v1";
-const TOKEN = process.env.CASINO_API_TOKEN ?? "nek-dolg-sekreten-token-za-test";
+const TOKEN = process.env.CASINO_API_TOKEN;
 
 // --- Optional bearer auth for the MCP itself ---
 // If you set MCP_BEARER_TOKEN in Vercel env vars, every MCP request must
