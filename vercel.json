@@ -2,6 +2,12 @@
   "functions": {
     "app/api/mcp/route.ts": {
       "maxDuration": 10
+    },
+    "app/.well-known/oauth-protected-resource/route.ts": {
+      "maxDuration": 10
+    },
+    "app/.well-known/oauth-authorization-server/route.ts": {
+      "maxDuration": 10
     }
   }
 }
