@@ -15,6 +15,21 @@ async function fetchJson(url: string) {
   return r.json();
 }
 
+type CasinoListItem = {
+  casino_id: string;
+  brand_name: string;
+  site_id: string;
+  status: string;
+};
+
+// API returns either a flat array or {ok, msg, data: [...]}
+function unwrapList(response: unknown): CasinoListItem[] {
+  if (Array.isArray(response)) return response as CasinoListItem[];
+  const wrapped = response as { data?: unknown };
+  if (Array.isArray(wrapped?.data)) return wrapped.data as CasinoListItem[];
+  return [];
+}
+
 function asText(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data) }] };
 }
@@ -32,7 +47,7 @@ const handler = createMcpHandler((server) => {
     async ({ site_id }) => {
       let url = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
       if (site_id) url += `&site_id=${encodeURIComponent(site_id)}`;
-      return asText(await fetchJson(url));
+      return asText(unwrapList(await fetchJson(url)));
     }
   );
 
@@ -49,14 +64,9 @@ const handler = createMcpHandler((server) => {
     async ({ name, site_id }) => {
       let url = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
       if (site_id) url += `&site_id=${encodeURIComponent(site_id)}`;
-      const list = (await fetchJson(url)) as Array<{
-        casino_id: string;
-        brand_name: string;
-        site_id: string;
-        status: string;
-      }>;
+      const list = unwrapList(await fetchJson(url));
       const needle = name.toLowerCase();
-      const matches = (Array.isArray(list) ? list : []).filter((c) =>
+      const matches = list.filter((c) =>
         c.brand_name?.toLowerCase().includes(needle)
       );
       return asText({ query: name, site_id, matches });
@@ -100,13 +110,8 @@ const handler = createMcpHandler((server) => {
     async ({ name, site_id }) => {
       let listUrl = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
       if (site_id) listUrl += `&site_id=${encodeURIComponent(site_id)}`;
-      const list = (await fetchJson(listUrl)) as Array<{
-        casino_id: string;
-        brand_name: string;
-        site_id: string;
-        status: string;
-      }>;
-      const matches = (Array.isArray(list) ? list : []).filter((c) =>
+      const list = unwrapList(await fetchJson(listUrl));
+      const matches = list.filter((c) =>
         c.brand_name?.toLowerCase().includes(name.toLowerCase())
       );
       if (matches.length === 0)
