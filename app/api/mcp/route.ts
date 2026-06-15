@@ -22,7 +22,7 @@ function asText(data: unknown) {
 const handler = createMcpHandler((server) => {
   server.tool(
     "list_casinos",
-    "Returns array of {casino_id, brand_name, site_id} for every casino. Optionally filter by site_id to get casinos for a specific site. Use this to resolve a brand name to its ID.",
+    "Returns array of {casino_id, brand_name, site_id, status} for every casino. Optionally filter by site_id to get casinos for a specific site. Use this to resolve a brand name to its ID.",
     {
       site_id: z
         .string()
@@ -53,6 +53,7 @@ const handler = createMcpHandler((server) => {
         casino_id: string;
         brand_name: string;
         site_id: string;
+        status: string;
       }>;
       const needle = name.toLowerCase();
       const matches = (Array.isArray(list) ? list : []).filter((c) =>
@@ -103,6 +104,7 @@ const handler = createMcpHandler((server) => {
         casino_id: string;
         brand_name: string;
         site_id: string;
+        status: string;
       }>;
       const matches = (Array.isArray(list) ? list : []).filter((c) =>
         c.brand_name?.toLowerCase().includes(name.toLowerCase())
