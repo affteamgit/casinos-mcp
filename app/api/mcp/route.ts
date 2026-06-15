@@ -64,16 +64,23 @@ const handler = createMcpHandler((server) => {
 
   server.tool(
     "get_casino_data",
-    "Fetch complete data (basic_info, bonuses, ratings, relations, status) for one or more casino IDs.",
+    "Fetch complete data (basic_info, bonuses, ratings, relations, status) for one or more casino IDs. Pass site_id to include site-specific bonuses.",
     {
       casino_ids: z
         .array(z.string())
         .min(1)
         .describe("Array of casino IDs, e.g. ['C000414']"),
+      site_id: z
+        .string()
+        .optional()
+        .describe(
+          "Optional site ID to include site-specific bonuses in the response, e.g. '1'"
+        ),
     },
-    async ({ casino_ids }) => {
+    async ({ casino_ids, site_id }) => {
       const ids = casino_ids.join(",");
-      const url = `${INTERNAL_BASE}?action=casino_data_complete&casino_id=${ids}&token=${TOKEN}`;
+      let url = `${INTERNAL_BASE}?action=casino_data_complete&casino_id=${ids}&token=${TOKEN}`;
+      if (site_id) url += `&site_id=${encodeURIComponent(site_id)}`;
       const data = await fetchJson(url);
       return asText(data);
     }
@@ -105,9 +112,9 @@ const handler = createMcpHandler((server) => {
       if (matches.length > 1)
         return asText({ error: "ambiguous", query: name, matches });
       const id = matches[0].casino_id;
-      const data = await fetchJson(
-        `${INTERNAL_BASE}?action=casino_data_complete&casino_id=${id}&token=${TOKEN}`
-      );
+      let dataUrl = `${INTERNAL_BASE}?action=casino_data_complete&casino_id=${id}&token=${TOKEN}`;
+      if (site_id) dataUrl += `&site_id=${encodeURIComponent(site_id)}`;
+      const data = await fetchJson(dataUrl);
       return asText(data);
     }
   );
