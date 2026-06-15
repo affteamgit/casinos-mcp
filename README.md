@@ -54,6 +54,12 @@ In Vercel dashboard → Project → Settings → Environment Variables:
 
 Redeploy after adding env vars.
 
+## Auth0 + Claude setup (full documentation)
+
+See **[docs/MCP_AUTH_SETUP.md](docs/MCP_AUTH_SETUP.md)** for architecture diagrams, everything we configured in Auth0 and Vercel, how users connect, access control, troubleshooting, and verification commands.
+
+To make Claude use the tools effectively, paste the instructions from **[docs/CLAUDE_PROJECT_INSTRUCTIONS.md](docs/CLAUDE_PROJECT_INSTRUCTIONS.md)** into your Claude Project's custom instructions.
+
 ## Auth0 tenant setup
 
 Before deploying with OAuth, configure your Auth0 tenant. Full guide:

@@ -22,10 +22,16 @@ function asText(data: unknown) {
 const handler = createMcpHandler((server) => {
   server.tool(
     "list_casinos",
-    "Returns array of {casino_id, brand_name} for every casino. Use this to resolve a brand name to its ID.",
-    {},
-    async () => {
-      const url = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
+    "Returns array of {casino_id, brand_name, site_id} for every casino. Optionally filter by site_id to get casinos for a specific site. Use this to resolve a brand name to its ID.",
+    {
+      site_id: z
+        .string()
+        .optional()
+        .describe("Optional site ID to filter casinos by site, e.g. '1'"),
+    },
+    async ({ site_id }) => {
+      let url = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
+      if (site_id) url += `&site_id=${encodeURIComponent(site_id)}`;
       return asText(await fetchJson(url));
     }
   );
@@ -33,18 +39,26 @@ const handler = createMcpHandler((server) => {
   server.tool(
     "find_casino_by_name",
     "Find a casino_id by (partial, case-insensitive) brand name. Returns matches array.",
-    { name: z.string().describe("Brand name or substring, e.g. 'CasinOK'") },
-    async ({ name }) => {
-      const url = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
+    {
+      name: z.string().describe("Brand name or substring, e.g. 'CasinOK'"),
+      site_id: z
+        .string()
+        .optional()
+        .describe("Optional site ID to restrict search to a specific site"),
+    },
+    async ({ name, site_id }) => {
+      let url = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
+      if (site_id) url += `&site_id=${encodeURIComponent(site_id)}`;
       const list = (await fetchJson(url)) as Array<{
         casino_id: string;
         brand_name: string;
+        site_id: string;
       }>;
       const needle = name.toLowerCase();
       const matches = (Array.isArray(list) ? list : []).filter((c) =>
         c.brand_name?.toLowerCase().includes(needle)
       );
-      return asText({ query: name, matches });
+      return asText({ query: name, site_id, matches });
     }
   );
 
@@ -67,12 +81,22 @@ const handler = createMcpHandler((server) => {
 
   server.tool(
     "get_casino_by_name",
-    "Resolve a brand name to its full casino data in one call. Errors if multiple casinos match.",
-    { name: z.string() },
-    async ({ name }) => {
-      const list = (await fetchJson(
-        `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`
-      )) as Array<{ casino_id: string; brand_name: string }>;
+    "Resolve a brand name to its full casino data in one call. Optionally scope to a site_id. Errors if multiple casinos match.",
+    {
+      name: z.string(),
+      site_id: z
+        .string()
+        .optional()
+        .describe("Optional site ID to restrict the search to a specific site"),
+    },
+    async ({ name, site_id }) => {
+      let listUrl = `${INTERNAL_BASE}?action=casino_list&token=${TOKEN}`;
+      if (site_id) listUrl += `&site_id=${encodeURIComponent(site_id)}`;
+      const list = (await fetchJson(listUrl)) as Array<{
+        casino_id: string;
+        brand_name: string;
+        site_id: string;
+      }>;
       const matches = (Array.isArray(list) ? list : []).filter((c) =>
         c.brand_name?.toLowerCase().includes(name.toLowerCase())
       );
