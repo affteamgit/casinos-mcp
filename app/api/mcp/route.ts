@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { auth0Mcp } from "@/lib/auth0";
 import { AUTH_ENABLED } from "@/lib/config";
+import { registerAnalyticsTools } from "@/lib/analytics-tools";
 
 const INTERNAL_BASE =
   "https://phpstack-1338806-5972702.cloudwaysapps.com/api/index.php";
@@ -135,6 +136,8 @@ const handler = createMcpHandler((server) => {
       return asText(data);
     }
   );
+
+  registerAnalyticsTools(server);
 }, {}, { basePath: "/api" });
 
 const authHandler = withMcpAuth(

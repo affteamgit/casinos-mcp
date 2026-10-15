@@ -10,6 +10,13 @@ them as native tools for Claude.
 - **`get_casino_data`** — full data for one or more casino IDs
 - **`get_casino_by_name`** — resolve name → full data in one call
 - **`live_bonuses`** — snapshot of active bonuses (WordPress REST API)
+- **`analytics_overview`** — daily or weekly page views, visits, visitors and affiliate clicks for bck or gamble
+- **`analytics_pages`** — the same per page, optionally compared with the previous window
+- **`analytics_placements`** — clicks by placement on the page, bonus type and wagering, with shares
+- **`analytics_shown_vs_clicked`** — listing rows shown (daily snapshots) joined with their clicks
+- **`analytics_aggregate`** — counts of page views or clicks grouped by up to three dimensions, with filters
+
+The analytics tools read the g-track collector's report endpoints (read-only, aggregated numbers only).
 
 ## Quick start (local)
 
@@ -51,6 +58,8 @@ In Vercel dashboard → Project → Settings → Environment Variables:
 | `AUTH0_DOMAIN` | prod | Auth0 tenant domain, e.g. `your-tenant.us.auth0.com` |
 | `AUTH0_AUDIENCE` | prod | API identifier; must match `MCP_SERVER_URL` |
 | `MCP_SERVER_URL` | prod | Canonical MCP URL, e.g. `https://<project>.vercel.app/api/mcp` |
+| `GTRACK_REPORT_URL` | analytics | Collector REST base, e.g. `https://<collector-host>/wp-json/g-track-server` |
+| `GTRACK_REPORT_KEY` | analytics | Value of `G_TRACK_REPORT_KEY` in the collector's wp-config.php |
 
 Redeploy after adding env vars.
 
