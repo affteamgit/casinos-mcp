@@ -41,6 +41,17 @@ Examples:
   `error` of `no_match` or `ambiguous` if the name is unclear.
 - `live_bonuses` — Snapshot of all currently active bonuses across casinos. Use
   for overviews, comparisons, and "what's available now" questions.
+- `analytics_overview` — daily or weekly page views, sessions, visitors and affiliate
+  clicks for `site` = `bck` or `gamble`; zero rows for empty periods.
+- `analytics_pages` — the same per page; `compare: true` adds the previous window and
+  change columns. Default window: the last seven full days.
+- `analytics_placements` — clicks by placement on the page, bonus type and wagering,
+  with shares; `compare: true` adds the previous window.
+- `analytics_shown_vs_clicked` — listing rows shown (daily snapshots) with their clicks;
+  `page` narrows to one page.
+- `analytics_aggregate` — counts of `page_view` or `link_click` grouped by 1 to 3
+  dimensions (day, week, page, referrer_host, placement, listing, position, casino,
+  bonus, bonus_type, wagering, link_url), with `filters`. Use after the fixed reports.
 
 ### How to choose a tool
 
@@ -61,6 +72,10 @@ Examples:
    use `list_casinos`, then filter the returned records client-side by the
    `status` field. Do not make extra tool calls just to filter by status.
 6. **User asks about current bonuses/promotions** → use `live_bonuses`.
+7. **User asks how a page, a site or a placement performed** → `analytics_pages` or
+   `analytics_placements` with `compare: true`; for a single number over time,
+   `analytics_overview`. Dig with `analytics_aggregate`, at most two calls per question.
+8. **User says "weekly report"** → follow the section "Weekly analytics report" below.
 
 ### Efficiency rules
 
@@ -120,3 +135,60 @@ Add these as example/starter prompts in the project so users discover the tools:
 - "Compare [brand A] and [brand B] on ratings and bonuses."
 - "What bonuses are live right now?"
 - "Find casinos with 'king' in the name."
+
+## Weekly analytics report
+
+Run on Monday when the user says "weekly report". The reviewed source of this routine is
+`docs/analytics/weekly-report-routine.md` in the affsites-dev repository.
+
+### 1. Window and sites
+
+- Window: the last complete Monday to Sunday (`from` = last Monday minus 7 days, `to` = last Sunday). Say the dates
+  in the first line of the output.
+- Sites, in this order: `bck`, then `gamble`. Everything below is done per site.
+
+### 2. Fixed picture (four calls per site)
+
+1. `analytics_overview` with `granularity=day`, `from` = the Monday two weeks back so both weeks come in one call.
+2. `analytics_pages` with `compare=true`, `limit=50`, `sort=views`.
+3. `analytics_placements` with `compare=true`.
+4. `analytics_shown_vs_clicked` for the week (no `page`).
+
+### 3. Findings (rules, not taste)
+
+A finding is any of these; keep at most five per site, biggest absolute change first:
+
+- a page whose `page_views` or `clicks` moved more than 25 % between the two weeks, with at least 30 of that count in
+  one of the two weeks
+- a page whose `clicks_per_100_views` moved more than 2 points, with at least 100 page views in both weeks
+- a placement, bonus type or wagering group whose `share_pct` moved more than 5 points
+- a listing row shown every day of the week (`days_shown` = 7) in positions 1 to 3 with zero clicks, or a row below
+  position 5 with more clicks than every row above it on the same page
+- a page present in only one of the two weeks (`prev_page_views` = 0 or `page_views` = 0 with the other above 30)
+
+### 4. Dig once per finding (at most two `analytics_aggregate` calls)
+
+- a page that moved: `event=page_view`, `group_by=["referrer_host"]`, `filters={"page": <url>}`, both weeks; and
+  `event=link_click`, `group_by=["position","casino"]`, same filter
+- a drop across the site: `event=page_view`, `group_by=["day","referrer_host"]`
+- a placement or bonus group that moved: `event=link_click`, `group_by=["casino"]`, `filters={"placement": <key>}`
+
+Write what the numbers suggest as a hypothesis ("views from google fell 40 %, the other referrers are flat"), never
+as a cause.
+
+### 5. Output
+
+1. Slack message, posted with the Slack connector when the chat has one, otherwise returned ready to paste:
+   - first line: "Weekly report <from> to <to>"
+   - per site: up to five findings, each three lines: the numbers (both weeks and the change), the likely reason,
+     a suggested action
+   - per site: one line of totals (page views, visitors, clicks, clicks per 100 views, each with the change)
+   - the link to the visual
+2. The visual: one published artifact per week with, per site, a daily views and clicks chart over the two weeks,
+   the pages table with changes, the placement breakdown and the findings. Static data as of the run; it holds no
+   key and reads nothing live.
+
+### 6. Log
+
+Append each finding as one line under "Previous findings" below (date, site, page or group, numbers, action), and
+start next week's run by saying whether last week's items recovered.
