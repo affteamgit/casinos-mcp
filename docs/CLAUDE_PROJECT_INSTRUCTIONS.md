@@ -143,8 +143,9 @@ Run on Monday when the user says "weekly report". The reviewed source of this ro
 
 ### 1. Window and sites
 
-- Window: the last complete Monday to Sunday (`from` = last Monday minus 7 days, `to` = last Sunday). Say the dates
-  in the first line of the output.
+- Window: the last complete Monday to Sunday. Run on a Monday and omit `from` and `to`: the defaults are exactly that
+  week (`to` = yesterday, `from` = six days before). On any other day pass them: `from` = the most recent Monday that
+  already has a full week after it, `to` = that Sunday. Say the dates in the first line of the output.
 - Sites, in this order: `bck`, then `gamble`. Everything below is done per site.
 
 ### 2. Fixed picture (four calls per site)
