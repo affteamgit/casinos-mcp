@@ -39,9 +39,9 @@ export function registerAnalyticsTools(server: McpServer, fetchReport: FetchRepo
   );
   server.tool(
     "analytics_shown_vs_clicked",
-    `What the listings showed versus what got clicked: one row per (page_url, listing_id, block_index, position, casino_id, bonus_id) from the daily listing snapshots, with casino_name, bonus_title, bonus_type, wagering, days_shown, days_visible_initially (shown without scrolling), clicks and clicks_per_shown_day. Use it for "we showed casino X in position 2 all week, did anyone click" and to find well-placed rows with no clicks. ${WINDOW}`,
-    { site, from, to, page: z.string().url().optional().describe("Only this page (any spelling: with or without trailing slash, query or fragment)"), limit: z.number().int().min(1).max(500).optional().describe("Rows, default 200, max 500") },
-    async (a) => asResult(await fetchReport("/report/shown-vs-clicked", { site: a.site, from: a.from, to: a.to, page: a.page, limit: a.limit }))
+    `What the listings showed versus what got clicked: one row per (page_url, listing_id, block_index, position, casino_id, bonus_id) from the daily listing snapshots, with casino_name, bonus_title, bonus_type, wagering, days_shown, days_visible_initially (shown without scrolling), clicks and clicks_per_shown_day. Use it for "we showed casino X in position 2 all week, did anyone click" and to find well-placed rows with no clicks. A whole site has more rows than the 500 cap, so for the weekly routine call it with flags=true: the collector then reads every row and returns only the ones tripping a rule, each with a flag column: top3_no_clicks (position 1 to 3, shown on every snapshot day of the window, zero clicks while the same listing block got clicks) or outclicks_rows_above (position above 5 with more clicks than every row above it in the same listing block), plus block_clicks for context; snapshot_days in the answer is how many days had a snapshot. ${WINDOW}`,
+    { site, from, to, page: z.string().url().optional().describe("Only this page (any spelling: with or without trailing slash, query or fragment)"), limit: z.number().int().min(1).max(500).optional().describe("Rows, default 200, max 500"), flags: z.boolean().optional().describe("true = only rows tripping the two routine rules (flag column), uncapped scan; default false = all rows up to limit") },
+    async (a) => asResult(await fetchReport("/report/shown-vs-clicked", { site: a.site, from: a.from, to: a.to, page: a.page, limit: a.limit, flags: a.flags }))
   );
   server.tool(
     "analytics_aggregate",

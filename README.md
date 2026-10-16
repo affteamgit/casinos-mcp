@@ -13,7 +13,7 @@ them as native tools for Claude.
 - **`analytics_overview`** — daily or weekly page views, visits, visitors and affiliate clicks for bck or gamble
 - **`analytics_pages`** — the same per page, optionally compared with the previous window
 - **`analytics_placements`** — clicks by placement on the page, bonus type and wagering, with shares
-- **`analytics_shown_vs_clicked`** — listing rows shown (daily snapshots) joined with their clicks
+- **`analytics_shown_vs_clicked`** — listing rows shown (daily snapshots) joined with their clicks; `flags=true` returns only rows tripping the two routine rules
 - **`analytics_aggregate`** — counts of page views or clicks grouped by up to three dimensions, with filters
 
 The analytics tools read the g-track collector's report endpoints (read-only, aggregated numbers only).

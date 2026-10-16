@@ -61,3 +61,14 @@ test("a failed fetch becomes a tool error, never a throw", async () => {
   const r = await byName.analytics_overview.handler({ site: "bck" });
   assert.deepEqual(r, { content: [{ type: "text", text: "report key rejected" }], isError: true });
 });
+
+test("shown_vs_clicked: flags option is a boolean passed through and described", async () => {
+  const { byName, calls } = setup({ ok: true, text: "{}" });
+  const svc = z.object(byName.analytics_shown_vs_clicked.shape);
+  assert.ok(svc.safeParse({ site: "bck", flags: true }).success);
+  assert.ok(!svc.safeParse({ site: "bck", flags: "yes" }).success);
+  await byName.analytics_shown_vs_clicked.handler({ site: "gamble", from: "2026-10-05", to: "2026-10-11", flags: true });
+  assert.deepEqual(calls[0], { path: "/report/shown-vs-clicked", params: { site: "gamble", from: "2026-10-05", to: "2026-10-11", page: undefined, limit: undefined, flags: true } });
+  assert.ok(byName.analytics_shown_vs_clicked.description.includes("flags=true"), "description tells Claude when to use flags");
+  assert.ok(byName.analytics_shown_vs_clicked.description.includes("top3_no_clicks") && byName.analytics_shown_vs_clicked.description.includes("outclicks_rows_above"), "description names the two flag values");
+});
