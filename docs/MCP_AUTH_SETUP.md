@@ -198,17 +198,25 @@ No Vercel or Auth0 dashboard access required for end users.
 | **JWT validation on MCP server** | Every tool request must carry a valid Auth0 access token with correct `aud` (API identifier). |
 | **`CASINO_API_TOKEN`** | Upstream API access. Server-side only; never sent to Claude or users. |
 
-### What does NOT gate access (in current setup)
+### Per-user allowlist (added 2026-10-16)
 
-- No per-user allowlist in MCP server code — any authenticated Auth0 user with a valid token can use all tools.
-- No requirement to pre-create Auth0 users when using Google login.
+After Auth0 verifies the token, `lib/auth0.ts` checks the user against the env var `MCP_ALLOWED_USERS`: a comma-separated
+list of emails and/or Auth0 user IDs (the `sub` claim, shown as "user_id" on the Auth0 Users page, e.g.
+`google-oauth2|1234567890`). Matching is case-insensitive. A user not on the list gets 401 "Invalid token" and the real
+reason, with their sub and email, is written to the Vercel function log (`User not on the allowlist: ...`). An empty or
+unset list denies everyone, so set the variable BEFORE deploying this version. Prefer listing the sub: the email claim is
+only present in the access token when Auth0 is configured to add it.
+
+### What still does NOT gate access
+
+- No requirement to pre-create Auth0 users when using Google login: anyone can log in, but only listed users pass.
 
 ### Tightening access (future options)
 
 - Stop sharing Client ID/Secret broadly
 - Restrict Google to a company domain (Google Workspace + Auth0 rules)
 - Switch to invite-only email/password (disable sign-ups, create users manually)
-- Add email allowlisting in `lib/auth0.ts` after token verification
+- (done) Per-user allowlist via `MCP_ALLOWED_USERS`, see above
 
 ---
 

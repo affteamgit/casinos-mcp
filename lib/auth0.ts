@@ -3,6 +3,7 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { InvalidTokenError } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 
 import { AUTH0_AUDIENCE, AUTH0_DOMAIN, AUTH_ENABLED } from "./config";
+import { assertAllowed } from "./allowlist";
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
@@ -46,6 +47,11 @@ function createTokenVerifier() {
           "Token is missing 'client_id' or 'azp' claim"
         );
       }
+
+      assertAllowed(
+        { sub: decoded.sub, ...(isNonEmptyString(decoded.email) && { email: decoded.email }) },
+        process.env.MCP_ALLOWED_USERS
+      );
 
       return {
         token,

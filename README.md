@@ -60,6 +60,7 @@ In Vercel dashboard → Project → Settings → Environment Variables:
 | `MCP_SERVER_URL` | prod | Canonical MCP URL, e.g. `https://<project>.vercel.app/api/mcp` |
 | `GTRACK_REPORT_URL` | analytics | Collector REST base, e.g. `https://<collector-host>/wp-json/g-track-server` |
 | `GTRACK_REPORT_KEY` | analytics | Value of `G_TRACK_REPORT_KEY` in the collector's wp-config.php |
+| `MCP_ALLOWED_USERS` | prod | Comma-separated emails and/or Auth0 user IDs (`sub`, e.g. `google-oauth2|1234`) allowed to use the tools after login. Empty or unset = nobody can use the tools (fail closed). |
 
 Redeploy after adding env vars.
 
