@@ -19,7 +19,7 @@ const handler = () => {
     `https://${AUTH0_DOMAIN}/`,
   ])
     .withJwksUri(`https://${AUTH0_DOMAIN}/.well-known/jwks.json`)
-    .withScopesSupported(["openid", "profile", "email", "mcp:tools"])
+    .withScopesSupported(["openid", "profile", "email", "offline_access", "mcp:tools"])
     .build();
 
   return new Response(JSON.stringify(metadata.toJSON()), {

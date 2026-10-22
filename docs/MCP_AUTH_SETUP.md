@@ -261,6 +261,7 @@ www-authenticate: Bearer error="invalid_token", error_description="No authorizat
 | Connector works for admin but unclear who else can connect | Google login auto-creates users | Access = whoever has Client ID/Secret + can complete Google OAuth |
 | `invalid_redirect_uri` | Wrong callback URL on Auth0 app | Must be exactly `https://claude.ai/api/mcp/auth_callback` |
 | Tools not loading / 401 after login | API not authorized for Claude app | APIs → casino data → Application Access → Claude → grant `mcp:tools` |
+| Connector disconnects every 24 h, login needed again | Access token expired and Claude got no refresh token: `offline_access` was not advertised and the API had Offline Access off | (fixed 2026-10-22) `offline_access` added to `scopes_supported` in both well-known routes; Auth0 API casino data → Settings → Allow Offline Access ON; Claude app → Grant Types includes Refresh Token. Re-add the connector once after the change. |
 
 ---
 

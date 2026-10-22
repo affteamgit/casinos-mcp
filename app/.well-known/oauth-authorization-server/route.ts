@@ -24,7 +24,7 @@ const handler = () => {
       "client_secret_post",
       "client_secret_basic",
     ],
-    scopes_supported: ["openid", "profile", "email", "mcp:tools"],
+    scopes_supported: ["openid", "profile", "email", "offline_access", "mcp:tools"],
   };
 
   return new Response(JSON.stringify(metadata), { headers: corsHeaders });
