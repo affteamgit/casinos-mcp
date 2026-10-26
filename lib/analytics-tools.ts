@@ -1,4 +1,4 @@
-// The five analytics tools: thin wrappers over the collector's report endpoints (see lib/gtrack.ts). Each tool returns
+// The six analytics tools: thin wrappers over the collector's report endpoints (see lib/gtrack.ts). Each tool returns
 // the collector JSON as text, unchanged, or a tool error with a plain message. Nothing here writes anywhere.
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -6,7 +6,7 @@ import { DIMENSIONS, EVENTS, GRANULARITIES, SITES, SORTS, dateSchema, reportFetc
 import type { ReportParams, ReportResult } from "./gtrack.ts";
 
 export type FetchReport = (path: string, params: ReportParams) => Promise<ReportResult>;
-export const ANALYTICS_TOOL_NAMES = ["analytics_overview", "analytics_pages", "analytics_placements", "analytics_shown_vs_clicked", "analytics_aggregate"] as const;
+export const ANALYTICS_TOOL_NAMES = ["analytics_overview", "analytics_pages", "analytics_placements", "analytics_shown_vs_clicked", "analytics_aggregate", "analytics_movers"] as const;
 
 const WINDOW = "Dates are YYYY-MM-DD, inclusive; to defaults to yesterday and from to six days before to; at most 92 days per call. Bots are excluded. Numbers are counts; *_per_100_* are rates; *_change_pct is null when the previous value was zero.";
 const site = z.enum(SITES).describe("bck = bitcoincasinokings.com, gamble = gamble.io");
@@ -53,5 +53,11 @@ export function registerAnalyticsTools(server: McpServer, fetchReport: FetchRepo
       filters: z.record(z.enum(DIMENSIONS), z.string()).optional().describe("Dimension name to one value, e.g. {\"casino\":\"C000008\"}"),
     },
     async (a) => asResult(await fetchReport("/report/aggregate", { site: a.site, event: a.event, group_by: a.group_by, filters: a.filters, from: a.from, to: a.to }))
+  );
+  server.tool(
+    "analytics_movers",
+    `Pages and casinos that moved beyond the site trend: the window is always compared with the equal window before it. Site ratio = site total this window / previous window (clicks, clicking sessions and page views each have their own); expected = previous count x ratio; excess = this window minus expected, excess_pct = excess as a percent of expected (null when the previous count was zero). A click mover (page or casino) is at least 10 clicks AND 30 % beyond expected, and its clicking sessions (distinct visits with a click) are at least 5 AND 30 % beyond the site's session trend in the same direction, so a few eager clickers cannot make a trend. A views mover (pages only, moved contains "views") is at least 50 page views AND 30 % beyond. Drops count like rises. Nothing moves on a metric whose previous site total is zero. Each mover carries drivers (top 3: for a page the casinos whose clicks on it changed most, casino_id "" = inline or untagged links; for a casino the pages where its clicks changed most) and snapshot_changes: listing rows added, removed, changed position (rank among casinos present in both weeks, so rows pushed down by an addition are left out) or bonus (id, title, type, wagering) between the last snapshot day of each window, positions 1 to 10 first, at most 15. snapshot_changes null = a window has no snapshot (unknown); [] = looked, nothing changed. Changes line up with a move; they do not prove its cause. Casino ids exist on clicks since 2026-10-12, so casino numbers for windows starting before 2026-10-19 are unreliable. At most 20 pages (click movers first) and 20 casinos; truncated=true when cut. ${WINDOW}`,
+    { site, from, to },
+    async (a) => asResult(await fetchReport("/report/movers", { site: a.site, from: a.from, to: a.to }))
   );
 }

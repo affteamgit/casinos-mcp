@@ -16,10 +16,10 @@ function setup(result: ReportResult) {
   return { tools, calls, byName };
 }
 
-test("registers the five tools with descriptions", () => {
+test("registers the six tools with descriptions", () => {
   const { tools } = setup({ ok: true, text: "{}" });
   assert.deepEqual(tools.map((t) => t.name), [...ANALYTICS_TOOL_NAMES]);
-  assert.deepEqual([...ANALYTICS_TOOL_NAMES], ["analytics_overview", "analytics_pages", "analytics_placements", "analytics_shown_vs_clicked", "analytics_aggregate"]);
+  assert.deepEqual([...ANALYTICS_TOOL_NAMES], ["analytics_overview", "analytics_pages", "analytics_placements", "analytics_shown_vs_clicked", "analytics_aggregate", "analytics_movers"]);
   for (const t of tools) assert.ok(t.description.length > 80, `${t.name} description is written for Claude`);
   assert.ok(tools[4].description.includes("referrer_host") && tools[4].description.includes("wagering"), "aggregate lists the dimensions");
 });
@@ -71,4 +71,16 @@ test("shown_vs_clicked: flags option is a boolean passed through and described",
   assert.deepEqual(calls[0], { path: "/report/shown-vs-clicked", params: { site: "gamble", from: "2026-10-05", to: "2026-10-11", page: undefined, limit: undefined, flags: true } });
   assert.ok(byName.analytics_shown_vs_clicked.description.includes("flags=true"), "description tells Claude when to use flags");
   assert.ok(byName.analytics_shown_vs_clicked.description.includes("top3_no_clicks") && byName.analytics_shown_vs_clicked.description.includes("outclicks_rows_above"), "description names the two flag values");
+});
+
+test("movers: calls /report/movers with site and window, no compare, describes the rules", async () => {
+  const { byName, calls } = setup({ ok: true, text: '{"pages":[]}' });
+  const m = byName.analytics_movers;
+  const r = await m.handler({ site: "gamble", from: "2026-10-19", to: "2026-10-25" });
+  assert.deepEqual(r, { content: [{ type: "text", text: '{"pages":[]}' }] });
+  assert.deepEqual(calls[0], { path: "/report/movers", params: { site: "gamble", from: "2026-10-19", to: "2026-10-25" } });
+  const schema = z.object(m.shape);
+  assert.ok(schema.safeParse({ site: "bck" }).success && !schema.safeParse({ site: "gamblineers" }).success);
+  assert.ok(!("compare" in m.shape), "movers always compares; no compare option");
+  for (const word of ["beyond", "10", "30 %", "5", "50", "drivers", "snapshot_changes", "null"]) assert.ok(m.description.includes(word), `description mentions ${word}`);
 });
