@@ -16,10 +16,10 @@ function setup(result: ReportResult) {
   return { tools, calls, byName };
 }
 
-test("registers the six tools with descriptions", () => {
+test("registers the seven tools with descriptions", () => {
   const { tools } = setup({ ok: true, text: "{}" });
   assert.deepEqual(tools.map((t) => t.name), [...ANALYTICS_TOOL_NAMES]);
-  assert.deepEqual([...ANALYTICS_TOOL_NAMES], ["analytics_overview", "analytics_pages", "analytics_placements", "analytics_shown_vs_clicked", "analytics_aggregate", "analytics_movers"]);
+  assert.deepEqual([...ANALYTICS_TOOL_NAMES], ["analytics_overview", "analytics_pages", "analytics_placements", "analytics_shown_vs_clicked", "analytics_aggregate", "analytics_movers", "analytics_daily"]);
   for (const t of tools) assert.ok(t.description.length > 80, `${t.name} description is written for Claude`);
   assert.ok(tools[4].description.includes("referrer_host") && tools[4].description.includes("wagering"), "aggregate lists the dimensions");
 });
@@ -83,4 +83,17 @@ test("movers: calls /report/movers with site and window, no compare, describes t
   assert.ok(schema.safeParse({ site: "bck" }).success && !schema.safeParse({ site: "gamblineers" }).success);
   assert.ok(!("compare" in m.shape), "movers always compares; no compare option");
   for (const word of ["beyond", "10", "30 %", "5", "50", "drivers", "snapshot_changes", "null"]) assert.ok(m.description.includes(word), `description mentions ${word}`);
+});
+
+test("daily: calls /report/daily with site and day only, describes the rules", async () => {
+  const { byName, calls } = setup({ ok: true, text: '{"posts":[]}' });
+  const m = byName.analytics_daily;
+  const r = await m.handler({ site: "bck", day: "2026-10-28" });
+  assert.deepEqual(r, { content: [{ type: "text", text: '{"posts":[]}' }] });
+  assert.deepEqual(calls[0], { path: "/report/daily", params: { site: "bck", day: "2026-10-28" } });
+  const schema = z.object(m.shape);
+  assert.ok(schema.safeParse({ site: "gamble" }).success && schema.safeParse({ site: "bck", day: "2026-10-28" }).success);
+  assert.ok(!schema.safeParse({ site: "bck", day: "28.10.2026" }).success, "day must be YYYY-MM-DD");
+  for (const k of ["from", "to", "compare"]) assert.ok(!(k in m.shape), `no ${k} option`);
+  for (const word of ["normal week", "posts", "levels_skipped", "2026-11-15", "also", "gaps", "unlisted"]) assert.ok(m.description.includes(word), `description mentions ${word}`);
 });
