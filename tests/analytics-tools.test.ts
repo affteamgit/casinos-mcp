@@ -95,5 +95,5 @@ test("daily: calls /report/daily with site and day only, describes the rules", a
   assert.ok(schema.safeParse({ site: "gamble" }).success && schema.safeParse({ site: "bck", day: "2026-10-28" }).success);
   assert.ok(!schema.safeParse({ site: "bck", day: "28.10.2026" }).success, "day must be YYYY-MM-DD");
   for (const k of ["from", "to", "compare"]) assert.ok(!(k in m.shape), `no ${k} option`);
-  for (const word of ["normal week", "posts", "levels_skipped", "2026-11-15", "also", "gaps", "unlisted"]) assert.ok(m.description.includes(word), `description mentions ${word}`);
+  for (const word of ["normal week", "posts", "levels_skipped", "2026-11-15", "also", "gaps", "unlisted", "level listing", "neighbours", "show more", "expected", "2026-10-19", "told"]) assert.ok(m.description.includes(word), `description mentions ${word}`);
 });
